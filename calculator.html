@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        html {
+            height: 100%;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        
+        .calculator {
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .calculator:hover {
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+        }
+        
+        .calc-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .calc-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .calc-btn:active {
+            transform: translateY(0);
+        }
+        
+        .display {
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            caret-color: transparent;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="calculator w-full max-w-md rounded-2xl overflow-hidden bg-white">
+        <!-- Display Area -->
+        <div class="display bg-gray-800 p-6 text-right">
+            <div id="previous-operand" class="text-gray-400 text-xl h-6 overflow-x-auto whitespace-nowrap"></div>
+            <div id="current-operand" class="text-white text-4xl font-semibold overflow-x-auto whitespace-nowrap">0</div>
+        </div>
+        
+        <!-- Calculator Buttons -->
+        <div class="grid grid-cols-4 gap-0.5 bg-gray-200 p-1">
+            <!-- Row 1 -->
+            <button class="calc-btn bg-red-500 hover:bg-red-600 text-white text-xl font-medium p-4" onclick="clearAll()">AC</button>
+            <button class="calc-btn bg-gray-300 hover:bg-gray-400 text-gray-800 text-xl font-medium p-4" onclick="deleteChar()">⌫</button>
+            <button class="calc-btn bg-gray-300 hover:bg-gray-400 text-gray-800 text-xl font-medium p-4" onclick="appendOperation('%')">%</button>
+            <button class="calc-btn bg-yellow-500 hover:bg-yellow-600 text-white text-xl font-medium p-4" onclick="appendOperation('/')">÷</button>
+            
+            <!-- Row 2 -->
+            <button class="calc-btn bg-gray-700 hover:bg-gray-600 text-white text-xl font-medium p-4" onclick="appendNumber('7')">7</button>
+            <button class="calc-btn bg-gray-700 hover:bg-gray-600 text-white text-xl font-medium p-4" onclick="appendNumber('8')">8</button>
+            <button class="calc-btn bg-gray-700 hover:bg-gray-600 text-white text-xl font-medium p-4" onclick="appendNumber('9')">9</button>
+            <button class="calc-btn bg-yellow-500 hover:bg-yellow-600 text-white text-xl font-medium p-4" onclick="appendOperation('*')">×</button>
+            
+            <!-- Row 3 -->
+            <button class="calc-btn bg-gray-700 hover:bg-gray-600 text-white text-xl font-medium p-4" onclick="appendNumber('4')">4</button>
+            <button class="calc-btn bg-gray-700 hover:bg-gray-600 text-white text-xl font-medium p-4" onclick="appendNumber('5')">5</button>
+            <button class="calc-btn bg-gray-700 hover:bg-gray-600 text-white text-xl font-medium p-4" onclick="appendNumber('6')">6</button>
+            <button class="calc-btn bg-yellow-500 hover:bg-yellow-600 text-white text-xl font-medium p-4" onclick="appendOperation('-')">−</button>
+            
+            <!-- Row 4 -->
+            <button class="calc-btn bg-gray-700 hover:bg-gray-600 text-white text-xl font-medium p-4" onclick="appendNumber('1')">1</button>
+            <button class="calc-btn bg-gray-700 hover:bg-gray-600 text-white text-xl font-medium p-4" onclick="appendNumber('2')">2</button>
+            <button class="calc-btn bg-gray-700 hover:bg-gray-600 text-white text-xl font-medium p-4" onclick="appendNumber('3')">3</button>
+            <button class="calc-btn bg-yellow-500 hover:bg-yellow-600 text-white text-xl font-medium p-4" onclick="appendOperation('+')">+</button>
+            
+            <!-- Row 5 -->
+            <button class="calc-btn bg-gray-700 hover:bg-gray-600 text-white text-xl font-medium p-4 col-span-2" onclick="appendNumber('0')">0</button>
+            <button class="calc-btn bg-gray-700 hover:bg-gray-600 text-white text-xl font-medium p-4" onclick="appendNumber('.')">.</button>
+            <button class="calc-btn bg-green-500 hover:bg-green-600 text-white text-xl font-medium p-4" onclick="calculate()">=</button>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const currentOperandElement = document.getElementById('current-operand');
+        const previousOperandElement = document.getElementById('previous-operand');
+        
+        // Calculator state
+        let currentOperand = '0';
+        let previousOperand = '';
+        let operation = undefined;
+        let resetScreen = false;
+        
+        // Helper functions
+        function updateDisplay() {
+            currentOperandElement.textContent = currentOperand;
+            previousOperandElement.textContent = previousOperand;
+        }
+        
+        function clearAll() {
+            currentOperand = '0';
+            previousOperand = '';
+            operation = undefined;
+            updateDisplay();
+        }
+        
+        function deleteChar() {
+            if (currentOperand.length === 1 || (currentOperand.length === 2 && currentOperand.startsWith('-'))) {
+                currentOperand = '0';
+            } else {
+                currentOperand = currentOperand.slice(0, -1);
+            }
+            updateDisplay();
+        }
+        
+        function appendNumber(number) {
+            if (currentOperand === '0' || resetScreen) {
+                currentOperand = number;
+                resetScreen = false;
+            } else {
+                if (number === '.' && currentOperand.includes('.')) return;
+                currentOperand += number;
+            }
+            updateDisplay();
+        }
+        
+        function appendOperation(op) {
+            if (currentOperand === '') return;
+            
+            if (operation !== undefined && !resetScreen) {
+                calculate();
+            }
+            
+            operation = op;
+            previousOperand = `${currentOperand} ${operation}`;
+            resetScreen = true;
+            updateDisplay();
+        }
+        
+        function calculate() {
+            if (operation === undefined || resetScreen) return;
+            
+            const prev = parseFloat(previousOperand);
+            const current = parseFloat(currentOperand);
+            let result;
+            
+            switch (operation) {
+                case '+':
+                    result = prev + current;
+                    break;
+                case '-':
+                    result = prev - current;
+                    break;
+                case '*':
+                    result = prev * current;
+                    break;
+                case '/':
+                    if (current === 0) {
+                        result = 'Error';
+                    } else {
+                        result = prev / current;
+                    }
+                    break;
+                case '%':
+                    result = prev % current;
+                    break;
+                default:
+                    return;
+            }
+            
+            currentOperand = String(result);
+            operation = undefined;
+            previousOperand = '';
+            resetScreen = true;
+            updateDisplay();
+        }
+        
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            if (/^[0-9.]$/.test(e.key)) {
+                appendNumber(e.key);
+            } else if (['+', '-', '*', '/', '%'].includes(e.key)) {
+                appendOperation(e.key);
+            } else if (e.key === 'Enter' || e.key === '=') {
+                e.preventDefault();
+                calculate();
+            } else if (e.key === 'Escape') {
+                clearAll();
+            } else if (e.key === 'Backspace') {
+                deleteChar();
+            }
+        });
+        
+        // Initialize calculator
+        updateDisplay();
+    </script>
+</body>
+</html>
